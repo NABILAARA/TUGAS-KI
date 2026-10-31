@@ -9,6 +9,12 @@ Kelas E
 
 ---
 
+## Deskripsi
+
+Sistem nilai mahasiswa dengan 3 role (mahasiswa, dosen, admin) yang menerapkan arsitektur **Zero Trust** sesuai NIST SP 800-207. Semua akses dikontrol melalui API Gateway sebagai Policy Enforcement Point (PEP) — setiap request diverifikasi token JWT, device terdaftar, dan kepemilikan data sebelum diizinkan. Service di belakang gateway tetap memverifikasi token secara mandiri (assume breach). Semua keputusan akses dan mutasi data dicatat di audit log dan audit trail yang immutable.
+
+---
+
 ## Cara Menjalankan
 
 ### 1. Persyaratan
