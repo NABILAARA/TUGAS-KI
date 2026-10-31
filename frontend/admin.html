@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Admin — Sistem Nilai</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen bg-gray-50 font-sans">
+
+  <!-- NAVBAR -->
+  <nav class="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-7 h-7 rounded-lg bg-gray-900 flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.955 11.955 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+          </svg>
+        </div>
+        <span class="text-sm font-semibold text-gray-800">Sistem Nilai</span>
+        <span class="text-xs text-gray-400 hidden sm:inline">/ Admin</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <p id="user-nama" class="text-sm font-medium text-gray-700 hidden sm:block">-</p>
+        <button onclick="logout()"
+          class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 border border-gray-200 hover:border-gray-300 px-3 py-1.5 rounded-lg transition">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+          </svg>
+          Keluar
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+
+    <div>
+      <h1 class="text-lg font-semibold text-gray-900">Dashboard Administrator</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Transkrip, audit log, dan audit trail sistem.</p>
+    </div>
+
+    <!-- TABS -->
+    <div class="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <button class="tab-btn active text-xs font-medium px-4 py-2 rounded-lg transition" data-tab="transkrip">Transkrip</button>
+      <button class="tab-btn text-xs font-medium px-4 py-2 rounded-lg transition" data-tab="audit-log">Audit Log</button>
+      <button class="tab-btn text-xs font-medium px-4 py-2 rounded-lg transition" data-tab="audit-trail">Audit Trail</button>
+    </div>
+
+    <!-- TAB: TRANSKRIP -->
+    <div id="tab-transkrip" class="tab-panel space-y-4">
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-50">
+          <h2 class="text-sm font-semibold text-gray-800 mb-3">Pilih Mahasiswa</h2>
+          <div class="flex gap-3 flex-wrap">
+            <select id="nim-select"
+              class="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-900 min-w-[240px]">
+              <option value="">-- Pilih Mahasiswa --</option>
+            </select>
+            <button id="btn-lihat-transkrip"
+              class="text-sm font-medium px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition disabled:opacity-40">
+              Lihat Transkrip
+            </button>
+          </div>
+        </div>
+        <div id="transkrip-info" class="hidden px-6 py-3 bg-blue-50 border-b border-blue-100">
+          <p id="transkrip-info-text" class="text-xs text-blue-700"></p>
+        </div>
+        <div id="transkrip-loading" class="hidden px-6 py-8 text-center text-sm text-gray-400">Memuat transkrip...</div>
+        <div id="transkrip-error"  class="hidden px-6 py-4 text-sm text-red-600 bg-red-50"></div>
+        <div id="transkrip-table-wrap" class="hidden overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Mata Kuliah</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wide">Nilai</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wide">Grade</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Tanggal Sync</th>
+              </tr>
+            </thead>
+            <tbody id="transkrip-tbody" class="divide-y divide-gray-50"></tbody>
+          </table>
+        </div>
+        <div id="transkrip-empty" class="hidden px-6 py-8 text-center text-sm text-gray-400">
+          Belum ada transkrip untuk mahasiswa ini.
+        </div>
+        <div id="transkrip-placeholder" class="px-6 py-8 text-center text-sm text-gray-400">
+          Pilih mahasiswa untuk melihat transkrip.
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: AUDIT LOG -->
+    <div id="tab-audit-log" class="tab-panel hidden space-y-4">
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-50 flex flex-wrap gap-3 items-center justify-between">
+          <div class="flex items-center gap-3">
+            <h2 class="text-sm font-semibold text-gray-800">Audit Log</h2>
+            <span id="log-total" class="text-xs text-gray-400"></span>
+          </div>
+          <div class="flex gap-2">
+            <select id="log-filter"
+              class="text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-900">
+              <option value="">Semua</option>
+              <option value="allow">Allow</option>
+              <option value="deny">Deny</option>
+            </select>
+            <button id="btn-refresh-log"
+              class="text-xs font-medium px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+              Refresh
+            </button>
+          </div>
+        </div>
+        <div id="log-loading" class="px-6 py-8 text-center text-sm text-gray-400">Memuat audit log...</div>
+        <div id="log-error" class="hidden px-6 py-4 text-sm text-red-600 bg-red-50"></div>
+        <div id="log-table-wrap" class="hidden overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Waktu</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Subjek</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Role</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Endpoint</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Device</th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wide">Hasil</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Alasan</th>
+              </tr>
+            </thead>
+            <tbody id="log-tbody" class="divide-y divide-gray-50"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: AUDIT TRAIL -->
+    <div id="tab-audit-trail" class="tab-panel hidden space-y-4">
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-50 flex flex-wrap gap-3 items-center justify-between">
+          <div class="flex items-center gap-3">
+            <h2 class="text-sm font-semibold text-gray-800">Audit Trail</h2>
+            <span id="trail-total" class="text-xs text-gray-400"></span>
+          </div>
+          <div class="flex gap-2">
+            <select id="trail-filter"
+              class="text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-900">
+              <option value="">Semua Aksi</option>
+              <option value="LOGIN">LOGIN</option>
+              <option value="LOGOUT">LOGOUT</option>
+              <option value="UPDATE_NILAI">UPDATE_NILAI</option>
+              <option value="FINALISASI_KELAS">FINALISASI_KELAS</option>
+              <option value="SYNC_TRANSKRIP">SYNC_TRANSKRIP</option>
+              <option value="TOKEN_SERVICE_ISSUED">TOKEN_SERVICE_ISSUED</option>
+            </select>
+            <button id="btn-refresh-trail"
+              class="text-xs font-medium px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+              Refresh
+            </button>
+          </div>
+        </div>
+        <div id="trail-loading" class="px-6 py-8 text-center text-sm text-gray-400">Memuat audit trail...</div>
+        <div id="trail-error" class="hidden px-6 py-4 text-sm text-red-600 bg-red-50"></div>
+        <div id="trail-table-wrap" class="hidden overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Waktu</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Aksi</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Actor</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Target</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Sebelum</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Sesudah</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Meta</th>
+              </tr>
+            </thead>
+            <tbody id="trail-tbody" class="divide-y divide-gray-50"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    if (!requireAuth('admin')) { /* redirect handled */ }
+
+    const user = getUser();
+    document.getElementById('user-nama').textContent = user?.nama || '-';
+
+    // ─── TABS ────────────────────────────────────────────────────────────────
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.remove('active', 'bg-white', 'shadow-sm', 'text-gray-900');
+          b.classList.add('text-gray-500');
+        });
+        btn.classList.add('active', 'bg-white', 'shadow-sm', 'text-gray-900');
+        btn.classList.remove('text-gray-500');
+
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.remove('hidden');
+
+        // Auto-load saat tab diklik
+        if (btn.dataset.tab === 'audit-log')   loadAuditLog();
+        if (btn.dataset.tab === 'audit-trail') loadAuditTrail();
+      });
+    });
+
+    // Init style tab aktif
+    document.querySelector('.tab-btn.active').classList.add('bg-white', 'shadow-sm', 'text-gray-900');
+    document.querySelectorAll('.tab-btn:not(.active)').forEach(b => b.classList.add('text-gray-500'));
+
+    // ─── TRANSKRIP ────────────────────────────────────────────────────────────
+    // Fetch daftar mahasiswa dari API (gunakan audit log atau langsung query nilai)
+    // Karena admin bisa akses semua transkrip, kita hardcode daftar dari seed.
+    const mahasiswaList = [
+      { nim: '2021001', nama: 'Budi Santoso' },
+      { nim: '2021002', nama: 'Citra Dewi' },
+      { nim: '2021003', nama: 'Dian Pratama' },
+    ];
+
+    const nimSelect = document.getElementById('nim-select');
+    mahasiswaList.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.nim;
+      opt.textContent = `${m.nama} (${m.nim})`;
+      nimSelect.appendChild(opt);
+    });
+
+    document.getElementById('btn-lihat-transkrip').addEventListener('click', async () => {
+      const nim = nimSelect.value;
+      if (!nim) { showToast('Pilih mahasiswa terlebih dahulu.', 'warning'); return; }
+
+      const mhs = mahasiswaList.find(m => m.nim === nim);
+      document.getElementById('transkrip-placeholder').classList.add('hidden');
+      document.getElementById('transkrip-loading').classList.remove('hidden');
+      document.getElementById('transkrip-error').classList.add('hidden');
+      document.getElementById('transkrip-table-wrap').classList.add('hidden');
+      document.getElementById('transkrip-empty').classList.add('hidden');
+      document.getElementById('transkrip-info').classList.add('hidden');
+
+      const res = await apiFetch(`/transkrip/${nim}`);
+      document.getElementById('transkrip-loading').classList.add('hidden');
+
+      if (!res || !res.ok) {
+        if (res?.status === 404) {
+          document.getElementById('transkrip-empty').classList.remove('hidden');
+        } else {
+          document.getElementById('transkrip-error').textContent = res?.data?.error || 'Gagal memuat transkrip.';
+          document.getElementById('transkrip-error').classList.remove('hidden');
+        }
+        return;
+      }
+
+      const data = res.data.data;
+      const infoEl = document.getElementById('transkrip-info');
+      document.getElementById('transkrip-info-text').textContent =
+        `Anda sedang melihat transkrip mahasiswa ${data.mahasiswa.nama} (NIM: ${data.mahasiswa.nim})`;
+      infoEl.classList.remove('hidden');
+
+      const list = data.transkrip || [];
+      if (list.length === 0) {
+        document.getElementById('transkrip-empty').classList.remove('hidden');
+        return;
+      }
+
+      const tbody = document.getElementById('transkrip-tbody');
+      tbody.innerHTML = list.map(t => {
+        const g = gradeLabel(t.nilai);
+        return `
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-3.5 text-gray-800 font-medium">${t.nama_kelas}</td>
+            <td class="px-6 py-3.5 text-center font-semibold text-gray-800">${t.nilai}</td>
+            <td class="px-6 py-3.5 text-center"><span class="${g.cls}">${g.label}</span></td>
+            <td class="px-6 py-3.5 text-gray-500">${formatDate(t.synced_at)}</td>
+          </tr>`;
+      }).join('');
+      document.getElementById('transkrip-table-wrap').classList.remove('hidden');
+    });
+
+    // ─── AUDIT LOG ────────────────────────────────────────────────────────────
+    async function loadAuditLog() {
+      const filter  = document.getElementById('log-filter').value;
+      const loading = document.getElementById('log-loading');
+      const errEl   = document.getElementById('log-error');
+      const wrap    = document.getElementById('log-table-wrap');
+      const tbody   = document.getElementById('log-tbody');
+      const total   = document.getElementById('log-total');
+
+      loading.classList.remove('hidden');
+      wrap.classList.add('hidden');
+      errEl.classList.add('hidden');
+
+      const url = filter ? `/admin/audit-log?result=${filter}&limit=200` : '/admin/audit-log?limit=200';
+      const res = await apiFetch(url);
+      loading.classList.add('hidden');
+
+      if (!res || !res.ok) {
+        errEl.textContent = res?.data?.error || 'Gagal memuat audit log.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const rows = res.data.data?.rows || [];
+      total.textContent = `${res.data.data?.total || 0} total entri`;
+
+      const resultColors = {
+        allow: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        deny:  'bg-red-50 text-red-700 border-red-200'
+      };
+
+      tbody.innerHTML = rows.map(r => `
+        <tr class="hover:bg-gray-50 text-xs">
+          <td class="px-4 py-2.5 text-gray-500 whitespace-nowrap">${formatDate(r.timestamp)}</td>
+          <td class="px-4 py-2.5 font-medium text-gray-800">${r.subject}</td>
+          <td class="px-4 py-2.5 text-gray-500">${r.role || '-'}</td>
+          <td class="px-4 py-2.5 font-mono text-gray-600">${r.method} ${r.endpoint}</td>
+          <td class="px-4 py-2.5 font-mono text-gray-400 text-xs">${r.device_id || '-'}</td>
+          <td class="px-4 py-2.5 text-center">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-medium ${resultColors[r.result] || ''}">
+              ${r.result.toUpperCase()}
+            </span>
+          </td>
+          <td class="px-4 py-2.5 text-gray-500 max-w-xs truncate" title="${r.reason}">${r.reason}</td>
+        </tr>`).join('');
+
+      wrap.classList.remove('hidden');
+    }
+
+    document.getElementById('log-filter').addEventListener('change', loadAuditLog);
+    document.getElementById('btn-refresh-log').addEventListener('click', loadAuditLog);
+
+    // ─── AUDIT TRAIL ─────────────────────────────────────────────────────────
+    const actionColors = {
+      LOGIN:               'bg-blue-50 text-blue-700 border-blue-200',
+      LOGOUT:              'bg-gray-100 text-gray-600 border-gray-200',
+      UPDATE_NILAI:        'bg-amber-50 text-amber-700 border-amber-200',
+      FINALISASI_KELAS:    'bg-emerald-50 text-emerald-700 border-emerald-200',
+      SYNC_TRANSKRIP:      'bg-purple-50 text-purple-700 border-purple-200',
+      TOKEN_SERVICE_ISSUED:'bg-indigo-50 text-indigo-700 border-indigo-200',
+    };
+
+    async function loadAuditTrail() {
+      const filter  = document.getElementById('trail-filter').value;
+      const loading = document.getElementById('trail-loading');
+      const errEl   = document.getElementById('trail-error');
+      const wrap    = document.getElementById('trail-table-wrap');
+      const tbody   = document.getElementById('trail-tbody');
+      const total   = document.getElementById('trail-total');
+
+      loading.classList.remove('hidden');
+      wrap.classList.add('hidden');
+      errEl.classList.add('hidden');
+
+      const url = filter
+        ? `/admin/audit-trail?action=${filter}&limit=200`
+        : '/admin/audit-trail?limit=200';
+      const res = await apiFetch(url);
+      loading.classList.add('hidden');
+
+      if (!res || !res.ok) {
+        errEl.textContent = res?.data?.error || 'Gagal memuat audit trail.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const rows = res.data.data?.rows || [];
+      total.textContent = `${res.data.data?.total || 0} total entri`;
+
+      function fmtJson(v) {
+        if (!v) return '<span class="text-gray-300">-</span>';
+        try {
+          const obj = typeof v === 'string' ? JSON.parse(v) : v;
+          return `<span class="font-mono text-xs text-gray-500" title='${JSON.stringify(obj, null, 2)}'>${JSON.stringify(obj).slice(0, 60)}${JSON.stringify(obj).length > 60 ? '…' : ''}</span>`;
+        } catch { return `<span class="font-mono text-xs text-gray-400">${String(v).slice(0,40)}</span>`; }
+      }
+
+      tbody.innerHTML = rows.map(r => `
+        <tr class="hover:bg-gray-50 text-xs align-top">
+          <td class="px-4 py-2.5 text-gray-500 whitespace-nowrap">${formatDate(r.timestamp)}</td>
+          <td class="px-4 py-2.5">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full border text-xs font-medium ${actionColors[r.action] || 'bg-gray-50 text-gray-600 border-gray-200'}">
+              ${r.action}
+            </span>
+          </td>
+          <td class="px-4 py-2.5 font-medium text-gray-800">${r.actor}<br/><span class="text-gray-400 font-normal">${r.actor_role}</span></td>
+          <td class="px-4 py-2.5 text-gray-500">${r.target_table || '-'}${r.target_id ? ` #${r.target_id}` : ''}</td>
+          <td class="px-4 py-2.5">${fmtJson(r.old_value)}</td>
+          <td class="px-4 py-2.5">${fmtJson(r.new_value)}</td>
+          <td class="px-4 py-2.5">${fmtJson(r.meta)}</td>
+        </tr>`).join('');
+
+      wrap.classList.remove('hidden');
+    }
+
+    document.getElementById('trail-filter').addEventListener('change', loadAuditTrail);
+    document.getElementById('btn-refresh-trail').addEventListener('click', loadAuditTrail);
+  </script>
+</body>
+</html>

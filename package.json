@@ -1,0 +1,23 @@
+{
+  "name": "zero-trust-sistem-nilai",
+  "version": "1.0.0",
+  "description": "Sistem Nilai Zero Trust - Tugas Praktikum Keamanan Informasi",
+  "main": "gateway/index.js",
+  "scripts": {
+    "seed": "node database/seed.js",
+    "gateway": "node gateway/index.js",
+    "nilai": "node service-nilai/index.js",
+    "transkrip": "node service-transkrip/index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^9.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.3",
+    "express-rate-limit": "^7.2.0",
+    "http-proxy-middleware": "^3.0.0",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "allowScripts": {}
+}

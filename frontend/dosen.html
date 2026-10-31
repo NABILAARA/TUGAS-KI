@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Dosen — Sistem Nilai</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen bg-gray-50 font-sans">
+
+  <!-- NAVBAR -->
+  <nav class="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-7 h-7 rounded-lg bg-gray-900 flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.955 11.955 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+          </svg>
+        </div>
+        <span class="text-sm font-semibold text-gray-800">Sistem Nilai</span>
+        <span class="text-xs text-gray-400 hidden sm:inline">/ Dosen</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <p id="user-nama" class="text-sm font-medium text-gray-700 hidden sm:block">-</p>
+        <button onclick="logout()"
+          class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 border border-gray-200 hover:border-gray-300 px-3 py-1.5 rounded-lg transition">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+          </svg>
+          Keluar
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+    <div>
+      <h1 id="greeting" class="text-lg font-semibold text-gray-900">Selamat datang</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Kelola nilai dan finalisasi kelas yang Anda ampu.</p>
+    </div>
+
+    <div id="main-loading" class="py-12 text-center text-sm text-gray-400">Memuat data kelas...</div>
+    <div id="main-error" class="hidden px-5 py-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700"></div>
+    <div id="kelas-container" class="hidden space-y-6"></div>
+  </main>
+
+  <!-- MODAL KONFIRMASI FINALISASI -->
+  <div id="modal-overlay" class="hidden fixed inset-0 bg-black/30 z-40 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold text-gray-900">Konfirmasi Finalisasi</h3>
+          <p class="text-xs text-gray-500 mt-0.5">Tindakan ini tidak dapat dibatalkan</p>
+        </div>
+      </div>
+      <p id="modal-text" class="text-sm text-gray-600 mb-6">Apakah Anda yakin ingin memfinalisasi kelas ini? Semua nilai akan dikunci dan tidak dapat diubah.</p>
+      <div class="flex gap-3">
+        <button id="modal-cancel"
+          class="flex-1 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition">
+          Batal
+        </button>
+        <button id="modal-confirm"
+          class="flex-1 py-2 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-lg transition disabled:opacity-50">
+          Ya, Finalisasi
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if (!requireAuth('dosen')) { /* redirect handled */ }
+
+    const user = getUser();
+    document.getElementById('user-nama').textContent = user?.nama || '-';
+    document.getElementById('greeting').textContent  = `Selamat datang, ${user?.nama || 'Dosen'}`;
+
+    // State modal
+    let pendingFinalisasiKelasId = null;
+    let pendingFinalisasiNama    = null;
+
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    document.getElementById('modal-confirm').addEventListener('click', doFinalisasi);
+
+    function openModal(kelasId, namaKelas) {
+      pendingFinalisasiKelasId = kelasId;
+      pendingFinalisasiNama    = namaKelas;
+      document.getElementById('modal-text').textContent =
+        `Anda akan memfinalisasi kelas "${namaKelas}". Semua nilai akan dikunci dan dikirim ke transkrip mahasiswa. Tindakan ini tidak dapat dibatalkan.`;
+      document.getElementById('modal-overlay').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      pendingFinalisasiKelasId = null;
+      pendingFinalisasiNama    = null;
+      document.getElementById('modal-overlay').classList.add('hidden');
+    }
+
+    async function doFinalisasi() {
+      if (!pendingFinalisasiKelasId) return;
+      const btn = document.getElementById('modal-confirm');
+      btn.disabled = true;
+      btn.textContent = 'Memproses...';
+
+      const res = await apiFetch(`/kelas/${pendingFinalisasiKelasId}/finalisasi`, { method: 'POST' });
+      btn.disabled = false;
+      btn.textContent = 'Ya, Finalisasi';
+      closeModal();
+
+      if (res && res.ok) {
+        showToast(`Kelas "${pendingFinalisasiNama}" berhasil difinalisasi!`, 'success');
+        loadData(); // reload semua data
+      } else {
+        showToast(res?.data?.error || 'Finalisasi gagal.', 'error');
+      }
+    }
+
+    async function updateNilai(nilaiId, kelasId, inputEl, btnEl) {
+      const rawNilai = inputEl.value.trim();
+      const nilaiInt = parseInt(rawNilai, 10);
+
+      if (isNaN(nilaiInt) || nilaiInt < 0 || nilaiInt > 100) {
+        showToast('Nilai harus angka antara 0 dan 100.', 'error');
+        return;
+      }
+
+      btnEl.disabled = true;
+      btnEl.textContent = '...';
+
+      const res = await apiFetch(`/nilai/${nilaiId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ nilai: nilaiInt })
+      });
+
+      btnEl.disabled = false;
+      btnEl.textContent = 'Simpan';
+
+      if (res && res.ok) {
+        showToast(`Nilai berhasil diperbarui menjadi ${nilaiInt}.`, 'success');
+        // Update tampilan grade langsung
+        const row = btnEl.closest('tr');
+        if (row) {
+          const gradeCell = row.querySelector('[data-grade]');
+          const g = gradeLabel(nilaiInt);
+          if (gradeCell) gradeCell.innerHTML = `<span class="${g.cls}">${g.label}</span>`;
+          inputEl.defaultValue = nilaiInt;
+        }
+      } else {
+        showToast(res?.data?.error || 'Gagal memperbarui nilai.', 'error');
+      }
+    }
+
+    function renderKelas(data) {
+      const container = document.getElementById('kelas-container');
+
+      // Kelompokkan per kelas
+      const kelasMap = {};
+      data.forEach(n => {
+        if (!kelasMap[n.kelas_id]) {
+          kelasMap[n.kelas_id] = {
+            kelas_id: n.kelas_id,
+            nama_kelas: n.nama_kelas,
+            is_final: n.kelas_final,
+            mahasiswa: []
+          };
+        }
+        kelasMap[n.kelas_id].mahasiswa.push(n);
+      });
+
+      const kelasList = Object.values(kelasMap);
+
+      if (kelasList.length === 0) {
+        container.innerHTML = `<p class="text-sm text-gray-400 py-8 text-center">Tidak ada kelas yang Anda ampu.</p>`;
+        container.classList.remove('hidden');
+        return;
+      }
+
+      container.innerHTML = kelasList.map(k => {
+        const isFinal   = k.is_final === 1;
+        const finalBadge = isFinal
+          ? `<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+               <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+               </svg> Sudah Final
+             </span>`
+          : `<span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">Belum Final</span>`;
+
+        const rows = k.mahasiswa.map(n => {
+          const g = gradeLabel(n.nilai);
+          if (isFinal) {
+            return `
+              <tr class="hover:bg-gray-50">
+                <td class="px-5 py-3 text-gray-700">${n.nama_mahasiswa}</td>
+                <td class="px-5 py-3 text-gray-500 text-xs font-mono">${n.nim}</td>
+                <td class="px-5 py-3 text-center font-semibold text-gray-800">${n.nilai}</td>
+                <td class="px-5 py-3 text-center" data-grade><span class="${g.cls}">${g.label}</span></td>
+                <td class="px-5 py-3 text-center">
+                  <span class="text-xs text-gray-400">Terkunci</span>
+                </td>
+              </tr>`;
+          }
+          return `
+            <tr class="hover:bg-gray-50">
+              <td class="px-5 py-3 text-gray-700">${n.nama_mahasiswa}</td>
+              <td class="px-5 py-3 text-gray-500 text-xs font-mono">${n.nim}</td>
+              <td class="px-5 py-3">
+                <input type="number" min="0" max="100"
+                  class="w-20 text-center text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                  value="${n.nilai}"
+                  data-nilai-id="${n.id}"
+                />
+              </td>
+              <td class="px-5 py-3 text-center" data-grade><span class="${g.cls}">${g.label}</span></td>
+              <td class="px-5 py-3 text-center">
+                <button
+                  class="btn-simpan text-xs font-medium text-white bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg transition disabled:opacity-40"
+                  data-nilai-id="${n.id}"
+                  data-kelas-id="${k.kelas_id}"
+                >Simpan</button>
+              </td>
+            </tr>`;
+        }).join('');
+
+        const finBtn = isFinal
+          ? `<button disabled
+               class="text-xs font-medium px-4 py-2 rounded-lg bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200">
+               Sudah Difinalisasi
+             </button>`
+          : `<button
+               class="btn-finalisasi text-xs font-medium px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition border border-gray-900"
+               data-kelas-id="${k.kelas_id}"
+               data-kelas-nama="${k.nama_kelas}"
+             >
+               Finalisasi Kelas
+             </button>`;
+
+        return `
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-50 flex items-center justify-between flex-wrap gap-3">
+              <div class="flex items-center gap-3">
+                <h2 class="text-sm font-semibold text-gray-800">${k.nama_kelas}</h2>
+                ${finalBadge}
+              </div>
+              ${finBtn}
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-gray-50 text-left">
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Nama</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">NIM</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-center">Nilai</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-center">Grade</th>
+                    <th class="px-5 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">${rows}</tbody>
+              </table>
+            </div>
+          </div>`;
+      }).join('');
+
+      // Event: tombol simpan
+      container.querySelectorAll('.btn-simpan').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const nilaiId = parseInt(btn.dataset.nilaiId);
+          const kelasId = parseInt(btn.dataset.kelasId);
+          const row     = btn.closest('tr');
+          const input   = row.querySelector(`input[data-nilai-id="${nilaiId}"]`);
+          updateNilai(nilaiId, kelasId, input, btn);
+        });
+      });
+
+      // Event: tombol finalisasi
+      container.querySelectorAll('.btn-finalisasi').forEach(btn => {
+        btn.addEventListener('click', () => {
+          openModal(parseInt(btn.dataset.kelasId), btn.dataset.kelasNama);
+        });
+      });
+
+      container.classList.remove('hidden');
+    }
+
+    async function loadData() {
+      const loading   = document.getElementById('main-loading');
+      const errEl     = document.getElementById('main-error');
+      const container = document.getElementById('kelas-container');
+
+      loading.classList.remove('hidden');
+      container.classList.add('hidden');
+      errEl.classList.add('hidden');
+
+      const res = await apiFetch('/nilai');
+      loading.classList.add('hidden');
+
+      if (!res || !res.ok) {
+        errEl.textContent = res?.data?.error || 'Gagal memuat data.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      renderKelas(res.data.data?.nilai || []);
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

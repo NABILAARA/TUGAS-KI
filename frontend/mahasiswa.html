@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Mahasiswa — Sistem Nilai</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } }
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body class="min-h-screen bg-gray-50 font-sans">
+
+  <!-- NAVBAR -->
+  <nav class="bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-7 h-7 rounded-lg bg-gray-900 flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.955 11.955 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+          </svg>
+        </div>
+        <span class="text-sm font-semibold text-gray-800">Sistem Nilai</span>
+        <span class="text-xs text-gray-400 hidden sm:inline">/ Mahasiswa</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="text-right hidden sm:block">
+          <p id="user-nama" class="text-sm font-medium text-gray-800 leading-tight">-</p>
+          <p id="user-nim" class="text-xs text-gray-400 leading-tight">-</p>
+        </div>
+        <button onclick="logout()"
+          class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 border border-gray-200 hover:border-gray-300 px-3 py-1.5 rounded-lg transition">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+          </svg>
+          Keluar
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+
+    <!-- Greeting -->
+    <div>
+      <h1 id="greeting" class="text-lg font-semibold text-gray-900">Selamat datang</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Lihat nilai dan transkrip akademis Anda di sini.</p>
+    </div>
+
+    <!-- NILAI -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+        <h2 class="text-sm font-semibold text-gray-800">Nilai Saya</h2>
+        <span id="nilai-badge" class="text-xs text-gray-400">memuat...</span>
+      </div>
+      <div id="nilai-loading" class="px-6 py-8 text-center text-sm text-gray-400">Memuat data nilai...</div>
+      <div id="nilai-error" class="hidden px-6 py-4 text-sm text-red-600 bg-red-50"></div>
+      <div id="nilai-table-wrap" class="hidden overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 text-left">
+              <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Mata Kuliah</th>
+              <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-center">Nilai</th>
+              <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-center">Grade</th>
+              <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody id="nilai-tbody" class="divide-y divide-gray-50"></tbody>
+        </table>
+      </div>
+      <div id="nilai-empty" class="hidden px-6 py-8 text-center text-sm text-gray-400">Belum ada data nilai.</div>
+    </div>
+
+    <!-- TRANSKRIP -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+        <h2 class="text-sm font-semibold text-gray-800">Transkrip Saya</h2>
+        <span id="transkrip-badge" class="text-xs text-gray-400">memuat...</span>
+      </div>
+      <div id="transkrip-loading" class="px-6 py-8 text-center text-sm text-gray-400">Memuat data transkrip...</div>
+      <div id="transkrip-error" class="hidden px-6 py-4 text-sm text-red-600 bg-red-50"></div>
+      <div id="transkrip-table-wrap" class="hidden overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 text-left">
+              <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Mata Kuliah</th>
+              <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-center">Nilai</th>
+              <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide text-center">Grade</th>
+              <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">Tanggal Sync</th>
+            </tr>
+          </thead>
+          <tbody id="transkrip-tbody" class="divide-y divide-gray-50"></tbody>
+        </table>
+      </div>
+      <div id="transkrip-empty" class="hidden px-6 py-8 text-center text-sm text-gray-400">
+        Belum ada data transkrip. Nilai akan muncul setelah dosen menyelesaikan finalisasi.
+      </div>
+    </div>
+
+    <!-- INFO DEVICE -->
+    <div class="bg-gray-50 rounded-xl border border-gray-100 px-5 py-4">
+      <p class="text-xs font-medium text-gray-500 mb-1">Device ID Terdaftar</p>
+      <p id="device-info" class="text-xs font-mono text-gray-600 break-all"></p>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    if (!requireAuth('mahasiswa')) { /* redirect handled inside */ }
+
+    const user = getUser();
+    document.getElementById('user-nama').textContent = user?.nama || '-';
+    document.getElementById('greeting').textContent  = `Selamat datang, ${user?.nama || 'Mahasiswa'}`;
+    document.getElementById('device-info').textContent = getDeviceId();
+
+    // Ambil NIM dari nilai (akan di-update setelah load)
+    async function loadNilai() {
+      const res = await apiFetch('/nilai');
+      const loading = document.getElementById('nilai-loading');
+      const errEl   = document.getElementById('nilai-error');
+      const wrap    = document.getElementById('nilai-table-wrap');
+      const empty   = document.getElementById('nilai-empty');
+      const badge   = document.getElementById('nilai-badge');
+      const tbody   = document.getElementById('nilai-tbody');
+
+      loading.classList.add('hidden');
+
+      if (!res || !res.ok) {
+        errEl.textContent = res?.data?.error || 'Gagal memuat data nilai.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+
+      const list = res.data.data?.nilai || [];
+      badge.textContent = `${list.length} mata kuliah`;
+
+      // Tampilkan NIM di navbar
+      if (list.length > 0 && list[0].nim) {
+        document.getElementById('user-nim').textContent = `NIM: ${list[0].nim}`;
+      }
+
+      if (list.length === 0) { empty.classList.remove('hidden'); return; }
+
+      wrap.classList.remove('hidden');
+      tbody.innerHTML = list.map(n => {
+        const g = gradeLabel(n.nilai);
+        const statusCls = n.is_final
+          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          : 'bg-amber-50 text-amber-700 border-amber-200';
+        const statusText = n.is_final ? 'Final' : 'Belum Final';
+        return `
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-6 py-3.5 text-gray-800 font-medium">${n.nama_kelas}</td>
+            <td class="px-6 py-3.5 text-center text-gray-800 font-semibold">${n.nilai}</td>
+            <td class="px-6 py-3.5 text-center">
+              <span class="${g.cls}">${g.label}</span>
+            </td>
+            <td class="px-6 py-3.5 text-center">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs border ${statusCls}">
+                ${statusText}
+              </span>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    async function loadTranskrip() {
+      // Ambil NIM dulu dari nilai atau user session
+      const nilaiRes = await apiFetch('/nilai');
+      const nim = nilaiRes?.data?.data?.nilai?.[0]?.nim;
+
+      const loading = document.getElementById('transkrip-loading');
+      const errEl   = document.getElementById('transkrip-error');
+      const wrap    = document.getElementById('transkrip-table-wrap');
+      const empty   = document.getElementById('transkrip-empty');
+      const badge   = document.getElementById('transkrip-badge');
+      const tbody   = document.getElementById('transkrip-tbody');
+
+      if (!nim) {
+        loading.classList.add('hidden');
+        empty.classList.remove('hidden');
+        badge.textContent = '0 mata kuliah';
+        return;
+      }
+
+      const res = await apiFetch(`/transkrip/${nim}`);
+      loading.classList.add('hidden');
+
+      if (!res || !res.ok) {
+        if (res?.status === 404) {
+          empty.classList.remove('hidden');
+          badge.textContent = '0 mata kuliah';
+        } else {
+          errEl.textContent = res?.data?.error || 'Gagal memuat transkrip.';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+
+      const list = res.data.data?.transkrip || [];
+      badge.textContent = `${list.length} mata kuliah`;
+
+      if (list.length === 0) { empty.classList.remove('hidden'); return; }
+
+      wrap.classList.remove('hidden');
+      tbody.innerHTML = list.map(t => {
+        const g = gradeLabel(t.nilai);
+        return `
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-6 py-3.5 text-gray-800 font-medium">${t.nama_kelas}</td>
+            <td class="px-6 py-3.5 text-center text-gray-800 font-semibold">${t.nilai}</td>
+            <td class="px-6 py-3.5 text-center">
+              <span class="${g.cls}">${g.label}</span>
+            </td>
+            <td class="px-6 py-3.5 text-gray-500">${formatDate(t.synced_at)}</td>
+          </tr>`;
+      }).join('');
+    }
+
+    loadNilai();
+    loadTranskrip();
+  </script>
+</body>
+</html>

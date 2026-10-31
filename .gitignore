@@ -1,0 +1,5 @@
+node_modules/
+.env
+database/sistem_nilai.db
+database/sistem_nilai.db-wal
+database/sistem_nilai.db-shm
